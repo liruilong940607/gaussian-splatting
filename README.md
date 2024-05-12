@@ -1,7 +1,7 @@
 # Gaussian Splatting with `gsplat` Backend
 
 In this fork of the official code base, we replace the rasterization backend from `diff-gaussian-rasterization` to `gsplat` with 
-minimal changes (<100 lines), and get a noticeable training speedup for free:
+minimal changes (<100 lines, [commit](https://github.com/liruilong940607/gaussian-splatting/commit/6a50be0fbb7cae3f100cb386c7591ac48f2c288d)), and get a noticeable training speedup for free:
 
 For example we showcase a 20% training speedup, with slightly better performance on the Garden scene from MipNeRF360, benchmarked on a 16GB V100-SXM2 at 7k steps.
 
