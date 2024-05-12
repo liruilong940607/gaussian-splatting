@@ -107,6 +107,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
+                mem = torch.cuda.max_memory_allocated() / 1024**3
+                print(f"Max memory used: {mem:.2f} GB")
                 scene.save(iteration)
 
             # Densification
