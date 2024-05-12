@@ -1,14 +1,14 @@
 # Gaussian Splatting with `gsplat` Backend
 
 In this fork of the official code base, we replace the rasterization backend from `diff-gaussian-rasterization` to `gsplat` with 
-minimal changes (<100 lines, [commit](https://github.com/liruilong940607/gaussian-splatting/commit/6a50be0fbb7cae3f100cb386c7591ac48f2c288d)), and get a noticeable training speedup for free:
+minimal changes (<100 lines, [commit](https://github.com/liruilong940607/gaussian-splatting/commit/6a50be0fbb7cae3f100cb386c7591ac48f2c288d)), and get some improvements for free:
 
-For example we showcase a 20% training speedup, with slightly better performance on the Garden scene from MipNeRF360, benchmarked on a 16GB V100-SXM2 at 7k steps.
+For example we showcase a 20% training speedup and a noticeable memory reduction, with slightly better performance on the Garden scene from MipNeRF360, benchmarked on a 16GB V100-SXM2 at 7k steps.
 
-| Backend | Training Time | SSIM | PSNR | LPIPS |
-| --------  | ------- | ------- | ------- | ------- |
-| `diff-gaussian-rasterization` | 482s | 0.8237 | 26.11 | 0.166 |
-| `gsplat v1.0` (Comming Soon) | 402s (20% faster) | 0.8366 | 26.18 | 0.163 |
+| Backend | Training Time | Memory | SSIM | PSNR | LPIPS |
+| --------  | ------- | ------- | ------- | ------- | ------- |
+| `diff-gaussian-rasterization` | 482s | 9.11 GB | 0.8237 | 26.11 | 0.166 |
+| `gsplat v1.0` (Comming Soon) | 402s (20% faster) | 8.78 GB | 0.8366 | 26.18 | 0.163 |
 
 On top of that, there are more functionalities supported in `gsplat v1.0`, including
 **batched rasterization**, **trade-off between memory and speed**, **sparse gradient** etc.
