@@ -3,7 +3,7 @@
 In this fork of the official code base, we replace the rasterization backend from `diff-gaussian-rasterization` to `gsplat` with 
 minimal changes (<100 lines), and get a noticeable training speedup for free:
 
-For example here is 20% training speedup on the Garden scene from MipNeRF360, benchmarked on a 16GB V100-SXM2
+For example here is 20% training speedup, with slightly better performance on the Garden scene from MipNeRF360, benchmarked on a 16GB V100-SXM2 at 7k steps.
 
 | Backend | Training Time | SSIM | PSNR | LPIPS |
 | --------  | ------- | ------- | ------- | ------- |
