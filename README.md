@@ -8,7 +8,7 @@ For example here is 20% training speedup, with slightly better performance on th
 | Backend | Training Time | SSIM | PSNR | LPIPS |
 | --------  | ------- | ------- | ------- | ------- |
 | `diff-gaussian-rasterization` | 482s | 0.8237 | 26.11 | 0.166 |
-| `gsplat` | 402s (20% faster) | 0.8366 | 26.18 | 0.163 |
+| `gsplat v1.0` | 402s (20% faster) | 0.8366 | 26.18 | 0.163 |
 
 ---------------
 
