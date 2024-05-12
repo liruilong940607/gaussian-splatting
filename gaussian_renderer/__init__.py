@@ -13,7 +13,7 @@ import math
 
 import torch
 from torch.nn import functional as F
-from gsplat2.rendering import rasterization
+from gsplat import project_gaussians, rasterize_gaussians, spherical_harmonics
 from scene.gaussian_model import GaussianModel
 
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None):
@@ -26,18 +26,12 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     tanfovy = math.tan(viewpoint_camera.FoVy * 0.5)
     focal_length_x = viewpoint_camera.image_width / (2 * tanfovx)
     focal_length_y = viewpoint_camera.image_height / (2 * tanfovy)
-    K = torch.tensor(
-        [
-            [focal_length_x, 0, viewpoint_camera.image_width / 2.0],
-            [0, focal_length_y, viewpoint_camera.image_height / 2.0],
-            [0, 0, 1],
-        ],
-        device="cuda",
-    )
+    cx = viewpoint_camera.image_width / 2.0
+    cy = viewpoint_camera.image_height / 2.0
 
     means3D = pc.get_xyz
     opacity = pc.get_opacity
-    scales = pc.get_scaling * scaling_modifier
+    scales = pc.get_scaling
     rotations = pc.get_rotation
     if override_color is not None:
         colors = override_color # [N, 3]
@@ -47,31 +41,57 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         sh_degree = pc.active_sh_degree
 
     viewmat = viewpoint_camera.world_view_transform.transpose(0, 1) # [4, 4]
-    render_colors, render_alphas, info = rasterization(
-        means=means3D,  # [N, 3]
-        quats=rotations,  # [N, 4]
-        scales=scales,  # [N, 3]
-        opacities=opacity.squeeze(-1),  # [N,]
-        colors=colors,
-        viewmats=viewmat[None],  # [1, 4, 4]
-        Ks=K[None],  # [1, 3, 3]
-        backgrounds=bg_color[None],
-        width=int(viewpoint_camera.image_width),
-        height=int(viewpoint_camera.image_height),
-        packed=False,
-        sh_degree=sh_degree,
+    width = int(viewpoint_camera.image_width)
+    height = int(viewpoint_camera.image_height)
+
+    tile_size = 16
+    means2d, depths, radii, conics, _, num_tiles_hit, _ = project_gaussians(
+        means3D,
+        scales,
+        scaling_modifier,
+        rotations,
+        viewmat,
+        focal_length_x,
+        focal_length_y,
+        cx,
+        cy,
+        height,
+        width,
+        tile_size,
     )
-    # [1, H, W, 3] -> [3, H, W]
-    rendered_image = render_colors[0].permute(2, 0, 1)
-    radii = info["radii"].squeeze(0) # [N,]
+
+    if colors.dim() == 3:
+        c2w = viewmat.inverse()
+        viewdirs = means3D - c2w[:3, 3]
+        viewdirs = F.normalize(viewdirs, dim=-1).detach()
+        if sh_degree is None:
+            sh_degree = int(math.sqrt(colors.shape[1]) - 1)
+        colors = spherical_harmonics(sh_degree, viewdirs, colors)
+
+    render_colors, render_alphas = rasterize_gaussians(
+        means2d,
+        depths,
+        radii,
+        conics,
+        num_tiles_hit,
+        colors,
+        opacity,
+        height,
+        width,
+        tile_size,
+        background=bg_color,
+        return_alpha=True,
+    )
+    # [H, W, 3] -> [3, H, W]
+    rendered_image = render_colors.permute(2, 0, 1)
     try:
-        info["means2d"].retain_grad() # [1, N, 2]
+        means2d.retain_grad() # [N, 2]
     except:
         pass
     
     # Those Gaussians that were frustum culled or had a radius of 0 were not visible.
     # They will be excluded from value updates used in the splitting criteria.
     return {"render": rendered_image,
-            "viewspace_points": info["means2d"],
+            "viewspace_points": means2d,
             "visibility_filter" : radii > 0,
             "radii": radii}
