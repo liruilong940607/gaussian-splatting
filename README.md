@@ -1,4 +1,4 @@
-# Gaussian Splatting with gsplat plugin
+# Gaussian Splatting with `gsplat` Backend
 
 In this fork of the official code base, we replace the rasterization backend from `diff-gaussian-rasterization` to `gsplat` with 
 minimal changes (<100 lines), and get a noticeable training speedup for free:
