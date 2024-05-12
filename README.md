@@ -10,9 +10,10 @@ For example we showcase a 20% training speedup and a noticeable memory reduction
 | `diff-gaussian-rasterization` | 482s | 9.11 GB | 0.8237 | 26.11 | 0.166 |
 | `gsplat v1.0` (Comming Soon) | 402s | 8.78 GB | 0.8366 | 26.18 | 0.163 |
 
+Note the improvements will be much more significant on larger scenes. 
 On top of that, there are more functionalities supported in `gsplat v1.0`, including
 **batched rasterization**, **trade-off between memory and speed**, **sparse gradient** etc.
-For details please refer to [gsplat.studio](https://docs.gsplat.studio/).
+Check [gsplat.studio](https://docs.gsplat.studio/) for more details.
 
 ---------------
 
