@@ -1,14 +1,14 @@
 # Gaussian Splatting with gsplat plugin
 
-This fork replaces the rasterization backend from `diff-gaussian-rasterization` to `gsplat` with 
-minimal changes (<100 lines) to the code base, and got speedup for training for free:
+In this fork of the official code base, we replace the rasterization backend from `diff-gaussian-rasterization` to `gsplat` with 
+minimal changes (<100 lines), and get a noticeable training speedup for free:
 
-For example here is a comparision on Garden scene from MipNeRF360 dataset, trained on a 16GB V100-SXM2.
+For example here is 20% training speedup on the Garden scene from MipNeRF360, benchmarked on a 16GB V100-SXM2
 
-| Garden 7k | Training Time | SSIM | PSNR | LPIPS |
+| Backend | Training Time | SSIM | PSNR | LPIPS |
 | --------  | ------- | ------- | ------- | ------- |
-| `diff-gaussian-rasterization` | 8m02s | 0.8237 | 26.11 | 0.166 |
-| `gsplat` | 6m42s | 0.8366 | 26.18 | 0.163 |
+| `diff-gaussian-rasterization` | 482s | 0.8237 | 26.11 | 0.166 |
+| `gsplat` | 402s (20% faster) | 0.8366 | 26.18 | 0.163 |
 
 ---------------
 
