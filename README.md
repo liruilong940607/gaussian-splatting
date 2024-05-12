@@ -12,7 +12,7 @@ For example we showcase a 20% training speedup, with slightly better performance
 
 On top of that, there are more functionalities supported in `gsplat v1.0`, including
 **batched rasterization**, **trade-off between memory and speed**, **sparse gradient** etc.
-For details please refer to [gsplat.studio](https://www.gsplat.studio/).
+For details please refer to [gsplat.studio](https://docs.gsplat.studio/).
 
 ---------------
 
