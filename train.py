@@ -10,6 +10,8 @@
 #
 
 import os
+import time
+import json
 import torch
 from random import randint
 from utils.loss_utils import l1_loss, ssim
@@ -48,6 +50,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
     ema_loss_for_log = 0.0
     progress_bar = tqdm(range(first_iter, opt.iterations), desc="Training progress")
     first_iter += 1
+    tic = time.time()
     for iteration in range(first_iter, opt.iterations + 1):        
         if network_gui.conn == None:
             network_gui.try_connect()
@@ -107,6 +110,16 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
+                mem = torch.cuda.max_memory_allocated() / 1024**3
+                toc = time.time()
+                stats = {
+                    "mem": mem,
+                    "ellipse_time": toc - tic,
+                    "num_GS": len(gaussians.get_xyz),
+                }
+                with open(scene.model_path + "/train_stats_" + str(iteration) + ".json", "w") as f:
+                    json.dump(stats, f)
+
                 scene.save(iteration)
 
             # Densification
