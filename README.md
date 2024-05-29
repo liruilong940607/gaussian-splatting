@@ -1,3 +1,22 @@
+# Gaussian Splatting with `gsplat` Backend
+
+In this fork of the official code base, we replace the rasterization backend from `diff-gaussian-rasterization` to `gsplat` with 
+minimal changes (<100 lines), and get some improvements for free:
+
+For example we showcase a 20% training speedup and a noticeable memory reduction, with slightly better performance on the Garden scene from MipNeRF360, benchmarked on a 24GB NVIDIA TITAN RTX at 7k steps.
+
+| Backend | Training Time | Memory | SSIM | PSNR | LPIPS |
+| --------  | ------- | ------- | ------- | ------- | ------- |
+| `diff-gaussian-rasterization` | 482s | 9.11 GB | 0.8237 | 26.11 | 0.166 |
+| `gsplat v1.0` | 398s | 8.62 GB | 0.8366 | 26.18 | 0.163 |
+
+Note the improvements will be much more significant on larger scenes. 
+On top of that, there are more functionalities supported in `gsplat v1.0`, including
+**batched rasterization**, **trade-off between memory and speed**, **sparse gradient** etc.
+Check [gsplat.studio](https://docs.gsplat.studio/) for more details.
+
+---------------
+
 # 3D Gaussian Splatting for Real-Time Radiance Field Rendering
 Bernhard Kerbl*, Georgios Kopanas*, Thomas Leimkühler, George Drettakis (* indicates equal contribution)<br>
 | [Webpage](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) | [Full Paper](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/3d_gaussian_splatting_high.pdf) | [Video](https://youtu.be/T_kXY43VZnk) | [Other GRAPHDECO Publications](http://www-sop.inria.fr/reves/publis/gdindex.php) | [FUNGRAPH project page](https://fungraph.inria.fr) |<br>
