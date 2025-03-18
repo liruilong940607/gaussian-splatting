@@ -10,6 +10,8 @@
 #
 
 import os
+import time
+import json
 import torch
 from random import randint
 from utils.loss_utils import l1_loss, ssim
@@ -33,6 +35,7 @@ try:
     FUSED_SSIM_AVAILABLE = True
 except:
     FUSED_SSIM_AVAILABLE = False
+assert FUSED_SSIM_AVAILABLE
 
 try:
     from diff_gaussian_rasterization import SparseGaussianAdam
@@ -70,7 +73,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
     progress_bar = tqdm(range(first_iter, opt.iterations), desc="Training progress")
     first_iter += 1
-    for iteration in range(first_iter, opt.iterations + 1):
+    tic = time.time()
+    for iteration in range(first_iter, opt.iterations + 1):        
         if network_gui.conn == None:
             network_gui.try_connect()
         while network_gui.conn != None:
@@ -158,6 +162,16 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background, 1., SPARSE_ADAM_AVAILABLE, None, dataset.train_test_exp), dataset.train_test_exp)
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
+                mem = torch.cuda.max_memory_allocated() / 1024**3
+                toc = time.time()
+                stats = {
+                    "mem": mem,
+                    "ellipse_time": toc - tic,
+                    "num_GS": len(gaussians.get_xyz),
+                }
+                with open(scene.model_path + "/train_stats_" + str(iteration) + ".json", "w") as f:
+                    json.dump(stats, f)
+
                 scene.save(iteration)
 
             # Densification

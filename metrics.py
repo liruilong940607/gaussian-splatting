@@ -15,11 +15,12 @@ from PIL import Image
 import torch
 import torchvision.transforms.functional as tf
 from utils.loss_utils import ssim
-from lpipsPyTorch import lpips
+# from lpipsPyTorch import lpips
 import json
 from tqdm import tqdm
 from utils.image_utils import psnr
 from argparse import ArgumentParser
+from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 def readImages(renders_dir, gt_dir):
     renders = []
@@ -41,6 +42,8 @@ def evaluate(model_paths):
     per_view_dict_polytopeonly = {}
     print("")
 
+    lpips = LearnedPerceptualImagePatchSimilarity(normalize=True).to("cuda")
+
     for scene_dir in model_paths:
         try:
             print("Scene:", scene_dir)
@@ -52,6 +55,8 @@ def evaluate(model_paths):
             test_dir = Path(scene_dir) / "test"
 
             for method in os.listdir(test_dir):
+                if method[-4:] == "json":
+                    continue
                 print("Method:", method)
 
                 full_dict[scene_dir][method] = {}
@@ -71,7 +76,8 @@ def evaluate(model_paths):
                 for idx in tqdm(range(len(renders)), desc="Metric evaluation progress"):
                     ssims.append(ssim(renders[idx], gts[idx]))
                     psnrs.append(psnr(renders[idx], gts[idx]))
-                    lpipss.append(lpips(renders[idx], gts[idx], net_type='vgg'))
+                    # lpipss.append(lpips(renders[idx], gts[idx], net_type='vgg'))
+                    lpipss.append(lpips(renders[idx], gts[idx]))
 
                 print("  SSIM : {:>12.7f}".format(torch.tensor(ssims).mean(), ".5"))
                 print("  PSNR : {:>12.7f}".format(torch.tensor(psnrs).mean(), ".5"))

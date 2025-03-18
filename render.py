@@ -22,20 +22,35 @@ from arguments import ModelParams, PipelineParams, get_combined_args
 from gaussian_renderer import GaussianModel
 try:
     from diff_gaussian_rasterization import SparseGaussianAdam
-    SPARSE_ADAM_AVAILABLE = True
+    SPARSE_ADAM_AVAILABLE = False
 except:
     SPARSE_ADAM_AVAILABLE = False
+import time
+import json
+from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure
+from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 
 def render_set(model_path, name, iteration, views, gaussians, pipeline, background, train_test_exp, separate_sh):
     render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
     gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
+    stats_path = os.path.join(model_path, name, "ours_{}.json".format(iteration))
+
+    ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to("cuda")
+    psnr = PeakSignalNoiseRatio(data_range=1.0).to("cuda")
+    lpips = LearnedPerceptualImagePatchSimilarity(normalize=True).to("cuda")
 
     makedirs(render_path, exist_ok=True)
     makedirs(gts_path, exist_ok=True)
 
+    ellipse_time = 0
+    metrics = {"psnr": [], "ssim": [], "lpips": []}
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
+        torch.cuda.synchronize()
+        tic = time.time()
         rendering = render(view, gaussians, pipeline, background, use_trained_exp=train_test_exp, separate_sh=separate_sh)["render"]
+        torch.cuda.synchronize()
+        ellipse_time += time.time() - tic
         gt = view.original_image[0:3, :, :]
 
         if args.train_test_exp:
@@ -44,6 +59,27 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
 
         torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
         torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+
+        rendering = torch.clamp(rendering, min=0, max=1)
+        metrics["psnr"].append(psnr(rendering[None], gt[None]))
+        metrics["ssim"].append(ssim(rendering[None], gt[None]))
+        metrics["lpips"].append(lpips(rendering[None], gt[None]))
+    
+    ellipse_time = ellipse_time / len(views)
+
+    psnr = torch.stack(metrics["psnr"]).mean()
+    ssim = torch.stack(metrics["ssim"]).mean()
+    lpips = torch.stack(metrics["lpips"]).mean()
+
+    stats = {
+        "psnr": psnr.item(),
+        "ssim": ssim.item(),
+        "lpips": lpips.item(),
+        "ellipse_time": ellipse_time,
+        "num_GS": len(gaussians.get_xyz),
+    }
+    with open(stats_path, "w") as f:
+        json.dump(stats, f)
 
 def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool, separate_sh: bool):
     with torch.no_grad():
